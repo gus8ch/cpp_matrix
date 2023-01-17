@@ -95,6 +95,7 @@ int main() {
         A.set(i, j, A_data[i][j]);
       }
     }
+  std::cout << "Matrix A: " << std::endl;  
   A.display();
 
   Matrix B(3, 3);
@@ -105,6 +106,7 @@ int main() {
         B.set(i, j, B_data[i][j]);
       }
     }
+  std::cout << "Matrix B: " << std::endl;   
   B.display();
 
   A.sum(B);
