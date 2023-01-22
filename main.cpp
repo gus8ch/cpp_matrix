@@ -162,7 +162,7 @@ class Matrix {
       return result;
     }
 
-    // method to miultiply self matrix to an external matrix
+    // method to miultiply self matrix to an external matrix by the Strassen method
     // this method will create a new matrix
     Matrix strassen(Matrix &A, Matrix &B) {
       int n = A.rows();
@@ -192,29 +192,39 @@ class Matrix {
         }
       }
 
-      Matrix S1 = B12.matrixSub(B22);
-      Matrix S2 = A11.matrixSum(A12);
+      Matrix S1 = A11.matrixSum(A22);
+      Matrix S2 = B11.matrixSum(B22);
+      Matrix P = strassen(S1, S2);
+
       Matrix S3 = A21.matrixSum(A22);
-      Matrix S4 = B21.matrixSub(B11);
-      Matrix S5 = A11.matrixSum(A22);
-      Matrix S6 = B11.matrixSum(B22);
-      Matrix S7 = A12.matrixSub(A22);
-      Matrix S8 = B21.matrixSum(B22);
-      Matrix S9 = A11.matrixSub(A21);
-      Matrix S10 = B11.matrixSum(B12);
+      Matrix Q = strassen(S3, B11);
 
-      Matrix P1 = strassen(A11, S1);
-      Matrix P2 = strassen(S2, B22);
-      Matrix P3 = strassen(S3, B11);
-      Matrix P4 = strassen(A22, S4);
-      Matrix P5 = strassen(S5, S6);
-      Matrix P6 = strassen(S7, S8);
-      Matrix P7 = strassen(S9, S10);
+      Matrix S4 = B12.matrixSub(B22);
+      Matrix R = strassen(A11, S4);
+      
+      Matrix S5 = B21.matrixSub(B11);
+      Matrix S = strassen(A22, S5);
 
-      Matrix C11 = P5.matrixSum(P4).matrixSub(P2).matrixSub(P6);
-      Matrix C12 = P1.matrixSum(P2);
-      Matrix C21 = P3.matrixSum(P4);
-      Matrix C22 = P5.matrixSum(P1).matrixSum(P3).matrixSum(P7);
+      Matrix S6 = A11.matrixSum(A12);
+      Matrix T = strassen(S6, B22);
+
+      Matrix S7 = A21.matrixSub(A11);
+      Matrix S8 = B11.matrixSum(B12);
+      Matrix U = strassen(S7, S8);
+
+      Matrix S9 = A12.matrixSub(A22);
+      Matrix S10 = B21.matrixSum(B22);
+      Matrix V = strassen(S9, S10);
+
+
+      // to avoid extra code, use class concatenation
+      // Matrix Tmp1 = P.matrixSum(S);
+      // Matrix Tmp2 = Tmp1.matrixSub(T);
+      // Matrix C11 = Temp2.matrixSum(V);
+      Matrix C11 = P.matrixSum(S).matrixSub(T).matrixSum(V);
+      Matrix C12 = R.matrixSum(T);
+      Matrix C21 = Q.matrixSum(S);
+      Matrix C22 = P.matrixSum(R).matrixSub(Q).matrixSum(U);
 
       Matrix Result(n, n);
       
@@ -230,7 +240,7 @@ class Matrix {
       return Result;
     }
 
-    // method to miultiply self matrix to an external matrix
+    // private method
     // this method will create a new matrix
     Matrix cofactor(int p, int q) {
       Matrix result(rows_-1, cols_-1);
@@ -253,9 +263,9 @@ class Matrix {
       return result;
     }
 
-    // method to miultiply self matrix to an external matrix
+    // method to find the determinant of the matrix
     // this method will create a new matrix
-    int determinant(int n) {
+    double determinant(int n) {
       int D = 0; // Initialize result
 
       //  Base case : if matrix contains single element
@@ -287,7 +297,7 @@ class Matrix {
       return D;
     }
 
-    // method to miultiply self matrix to an external matrix
+    // method to find the transpose of the matrix
     // this method will create a new matrix
     Matrix transpose() {
       Matrix result(cols_, rows_);
@@ -301,7 +311,7 @@ class Matrix {
       return result;
     }
 
-    // method to miultiply self matrix to an external matrix
+    // method to find the adjoint of the matrix
     // this method will create a new matrix
     Matrix adjoint() {
       Matrix result(rows_, cols_);
@@ -369,7 +379,7 @@ class Matrix {
       return result;
     }
 
-    // method to miultiply self matrix to an external matrix
+    // method to find the pseiudo inverse matrix
     // this method will create a new matrix
     Matrix psdinverse() {
       if(cols_ >= rows_) {
@@ -403,23 +413,28 @@ class Matrix {
 };
 
 int main() {
-  Matrix A(3, 3);
-  int A_data[3][3] = { {1, 2, 3}, {4, 5, 6}, {7, 8, 9} };
-  for (int i = 0; i < 3; i++) {
-      for (int j = 0; j < 3; j++) {
+  int N = 4;
+
+  Matrix A(N, N);
+  int A_data[N][N] = { {1, 2, 3, 4}, {5, 6, 7, 8}, {9, 0, 1, 2}, {3, 4, 5, 6} };
+  for (int i = 0; i < N; i++) {
+      for (int j = 0; j < N; j++) {
         A.set(i, j, A_data[i][j]);
       }
     }
-  std::cout << "Matrix A: " << std::endl;
-  A.display();
 
-  Matrix B(3, 3);
-  int B_data[3][3] = { {1, 2, 3}, {4, 5, 6}, {7, 8, 9} };
-  for (int i = 0; i < 3; i++) {
-      for (int j = 0; j < 3; j++) {
+  Matrix B(N, N);
+  int B_data[N][N] = { {0, 9, 8, 7}, {6, 5, 4, 3}, {2, 1, 0, 9}, {8, 7, 6, 5} };
+  for (int i = 0; i < N; i++) {
+      for (int j = 0; j < N; j++) {
         B.set(i, j, B_data[i][j]);
       }
     }
+
+    
+  std::cout << "Matrix A: " << std::endl;
+  A.display();
+
   std::cout << "Matrix B: " << std::endl;
   B.display();
 
@@ -451,9 +466,24 @@ int main() {
   std::cout << "Matrix dot: " << std::endl;
   dot.display();
 
-  Matrix strassen = A.strassen(A, B);
-  std::cout << "Matrix strassen: " << std::endl;
-  strassen.display();
+  // Matrix strassen = A.strassen(A, B);
+  // std::cout << "Matrix strassen: " << std::endl;
+  // strassen.display();
+
+  double determinant = A.determinant(N);
+  std::cout << "Matrix determinant: " << determinant << std::endl << std::endl;
+
+  Matrix transpose = A.transpose();
+  std::cout << "Matrix transpose: " << std::endl;
+  transpose.display();
+
+  Matrix inverse = A.inverse();
+  std::cout << "Matrix inverse: " << std::endl;
+  inverse.display();
+
+  Matrix adjoint = A.adjoint();
+  std::cout << "Matrix adjoint: " << std::endl;
+  adjoint.display();
 
   return 0;
 }
